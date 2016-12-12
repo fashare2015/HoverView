@@ -1,1 +1,1 @@
-include ':app', ':hoverview'
+include ':app', ':hover_view'

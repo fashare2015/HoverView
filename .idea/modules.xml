@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/HoverView.iml" filepath="$PROJECT_DIR$/HoverView.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/hoverview/hoverview.iml" filepath="$PROJECT_DIR$/hoverview/hoverview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/hover_view/hover_view.iml" filepath="$PROJECT_DIR$/hover_view/hover_view.iml" />
     </modules>
   </component>
 </project>
