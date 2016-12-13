@@ -3,18 +3,14 @@ package com.fashare.hover_view;
 /**
  * Created by jinliangshan on 16/12/13.
  */
-
 public enum ViewState {
-    FILL,
+    FILL,       // 全屏
+    HOVER,      // 半空悬停
+    ICE_BERG,   // 冰山一角(只露出一点): 也是悬停, 比 HOVER 更低
+    CLOSE;      // 关闭: 完全藏在屏幕底部
 
-    HOVER,
-
-    ICE_BERG,
-
-    CLOSE;
-
-    private static int sRangeOfTop;
-    private int mTop;
+    private static int sRangeOfTop; // 指定全屏的大小
+    private int mTop;   // FILL, HOVER... 各自对应高度: 即 View.getTop() 属性
 
     public static void setRangeOfTop(int rangeOfTop) {
         sRangeOfTop = rangeOfTop;

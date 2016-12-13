@@ -11,7 +11,6 @@ import android.widget.FrameLayout;
  * User: fashare(153614131@qq.com)
  * Date: 2016-12-12
  * Time: 21:16
- * <br/><br/>
  */
 public class HoverViewContainer extends FrameLayout implements IShowState{
     private final String TAG = this.getClass().getSimpleName();
@@ -80,8 +79,7 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return false;
-//        return mBottomDragger.shouldInterceptTouchEvent(ev);
+        return mBottomDragger.shouldInterceptTouchEvent(ev);
     }
 
     @Override
@@ -134,27 +132,8 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
     }
     // ------ 对外接口 IShowState: end ------
 
-    /**
-     * Retrieve the current drag state of this helper. This will return one of
-     * {@link ViewDragHelper#STATE_IDLE}, {@link ViewDragHelper#STATE_DRAGGING} or {@link ViewDragHelper#STATE_SETTLING}.
-     * @return The current drag state
-     */
     public int getViewDragState() {
         return mBottomDragger.getViewDragState();
-    }
-
-    private ChildScrollInfo mChildScrollInfo;
-
-    public ChildScrollInfo getChildScrollInfo() {
-        return mChildScrollInfo;
-    }
-
-    public void setChildScrollInfo(ChildScrollInfo childScrollInfo) {
-        mChildScrollInfo = childScrollInfo;
-    }
-
-    public interface ChildScrollInfo{
-        int getScrollY();
     }
 
     private class DragCallback extends ViewDragHelper.Callback{

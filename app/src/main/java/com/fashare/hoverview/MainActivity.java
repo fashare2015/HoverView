@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.fashare.hover_view.HoverViewContainer;
 import com.fashare.hover_view.ViewState;
@@ -36,8 +37,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-
-
         mBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -55,14 +54,6 @@ public class MainActivity extends AppCompatActivity {
                 "11", "12", "13", "14", "15",
                 "16", "17", "18", "19", "20"
         ));
-
-        mHv.setChildScrollInfo(new HoverViewContainer.ChildScrollInfo() {
-            @Override
-            public int getScrollY() {
-                return mRv.getScrollY();
-            }
-        });
-
     }
 
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
@@ -100,10 +91,21 @@ public class MainActivity extends AppCompatActivity {
             public ViewHolder(Context context) {
                 super(View.inflate(context, android.R.layout.simple_list_item_1, null));
                 mTextView = (TextView)itemView.findViewById(android.R.id.text1);
+                mTextView.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                ));
+                itemView.requestLayout();
             }
 
-            public void bind(String data) {
+            public void bind(final String data) {
                 mTextView.setText(data);
+                mTextView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }
     }
