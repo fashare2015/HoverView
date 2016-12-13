@@ -1,34 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.fashare.hover_view.HoverViewContainer
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/hv"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/darker_gray">
 
-    <Button
-        android:id="@+id/btn"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="aaa"/>
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="知乎收藏夹"/>
+    </LinearLayout>
 
     <com.fashare.hover_view.HoverView
-        android:layout_margin="50dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="100dp"
-        android:background="@android:color/darker_gray"
-        android:orientation="vertical">
+        android:layout_height="400dp"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:layout_marginTop="50dp"
+        app:mTopHover="0.5">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="sdfsdfsjhf"/>
+            android:padding="15dp"
+            android:text="收藏夹"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="bbb"/>
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
     </com.fashare.hover_view.HoverView>
 

@@ -15,44 +15,14 @@ import android.widget.FrameLayout;
  */
 public class HoverViewContainer extends FrameLayout implements IShowState{
     private final String TAG = this.getClass().getSimpleName();
-
     private Context mContext;
 
     private ViewDragHelper mBottomDragger;
     private static final float TOUCH_SLOP_SENSITIVITY = 1.f;
-    private ViewDragHelper.Callback mBottomCallback = new ViewDragHelper.Callback() {
+    private DragCallback mBottomCallback = new DragCallback();
 
-        @Override
-        public boolean tryCaptureView(View child, int pointerId) {
-//            Log.d(TAG, "tryCaptureView");
-            return true;
-        }
-
-        @Override
-        public int clampViewPositionVertical(View child, int top, int dy) {
-            return top;
-        }
-
-        //手指释放的时候回调
-        @Override
-        public void onViewReleased(View releasedChild, float xvel, float yvel) {
-            //mAutoBackView手指释放时可以自动回去
-            if (releasedChild == mBottomView) {
-                mBottomDragger.settleCapturedViewAt(0, 100);
-                invalidate();
-            }
-        }
-
-        //在边界拖动时回调
-        @Override
-        public void onEdgeDragStarted(int edgeFlags, int pointerId) {
-//            mDragger.captureChildView(mEdgeTrackerView, pointerId);
-        }
-    };
-
-    private View mBottomView;
-    private static View EMPTY_VIEW;
-
+    private HoverView mBottomView;
+    static HoverView EMPTY_VIEW;
 
     public HoverViewContainer(Context context) {
         super(context);
@@ -74,29 +44,44 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
         mBottomDragger = ViewDragHelper.create(this, TOUCH_SLOP_SENSITIVITY, mBottomCallback);
         mBottomDragger.setEdgeTrackingEnabled(ViewDragHelper.EDGE_BOTTOM);
 
+        EMPTY_VIEW = new HoverView(context);
+        EMPTY_VIEW.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
+    }
 
-        EMPTY_VIEW = new View(context);
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        resetBottomViewHeight();
+    }
 
-
-
-//        initScroller(context);
+    private void resetBottomViewHeight() {
+        mBottomView.getLayoutParams().height = this.getMeasuredHeight();
+        invalidate();
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
 
+        mBottomView = findHoverView();
+        if(mBottomView == EMPTY_VIEW)
+            this.addView(EMPTY_VIEW);
+
+        ViewState.initViewState(mBottomView, HoverViewContainer.this);
+    }
+
+    private HoverView findHoverView() {
         for(int i=0; i<getChildCount(); i++)
             if(getChildAt(i) instanceof HoverView)
-                mBottomView = getChildAt(i);
+                return (HoverView)getChildAt(i);
 
-        if(mBottomView == null)
-            mBottomView = EMPTY_VIEW;
+        return EMPTY_VIEW;
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return mBottomDragger.shouldInterceptTouchEvent(ev);
+        return false;
+//        return mBottomDragger.shouldInterceptTouchEvent(ev);
     }
 
     @Override
@@ -105,42 +90,121 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
         return true;
     }
 
-//    // ------ 滑动部分 begin ------
-//    private Scroller mScroller;
-//    private int mScrollDuration = 1000; // 单位 ms
-//
-//    private void initScroller(Context context) {
-//        mScroller = new Scroller(context);
-//    }
-//
-//    private void smoothScrollTo(int destY){
-//        int scrollY = mBottomView.getScrollY();
-//        int deltaY = destY - scrollY;
-//        mScroller.startScroll(0, scrollY, 0, deltaY, mScrollDuration);
-//        mBottomView.invalidate();
-//    }
-//
-//    @Override
-//    public void computeScroll() {
-//        if(mScroller.computeScrollOffset()){
-//            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
-//            mBottomView.postInvalidate();
-//        }
-//    }
-//    // ------ 滑动部分 end ------
+    // ------ 滑动部分 begin ------
+    private void smoothScrollTo(int finalTop){
+        mBottomDragger.smoothSlideViewTo(mBottomView, 0, finalTop);
+        invalidate();
+    }
+
+    // smoothScrollTo() 中用到 mScroller,
+    // 不要忘了配合 computeScroll()
     @Override
     public void computeScroll() {
         if(mBottomDragger.continueSettling(true))
             invalidate();
     }
 
-    // ------ 对外接口 IShowState: begin ------
-    @Override
-    public void showAsHover(){
-//        ((HoverView)mBottomView).showAsHover();
-//        mBottomView.scrollTo(0, -300);
-        mBottomDragger.smoothSlideViewTo(mBottomView, 0, 100);
+
+    private void scrollTo(int finalTop){
+        mBottomView.setTop(finalTop);
         invalidate();
     }
+    // ------ 滑动部分 end ------
+
+    // ------ 对外接口 IShowState: begin ------
+    private ViewState mViewState = ViewState.CLOSE;
+
+    @Override
+    public void changeState(ViewState viewState){
+        changeState(viewState, true);
+    }
+
+    @Override
+    public void changeState(ViewState viewState, boolean isSmoothScroll) {
+        mViewState = viewState;
+        if(isSmoothScroll)
+            smoothScrollTo(viewState.getTop());
+        else
+            scrollTo(viewState.getTop());
+    }
+
+    @Override
+    public ViewState getState() {
+        return mViewState;
+    }
     // ------ 对外接口 IShowState: end ------
+
+    /**
+     * Retrieve the current drag state of this helper. This will return one of
+     * {@link ViewDragHelper#STATE_IDLE}, {@link ViewDragHelper#STATE_DRAGGING} or {@link ViewDragHelper#STATE_SETTLING}.
+     * @return The current drag state
+     */
+    public int getViewDragState() {
+        return mBottomDragger.getViewDragState();
+    }
+
+    private ChildScrollInfo mChildScrollInfo;
+
+    public ChildScrollInfo getChildScrollInfo() {
+        return mChildScrollInfo;
+    }
+
+    public void setChildScrollInfo(ChildScrollInfo childScrollInfo) {
+        mChildScrollInfo = childScrollInfo;
+    }
+
+    public interface ChildScrollInfo{
+        int getScrollY();
+    }
+
+    private class DragCallback extends ViewDragHelper.Callback{
+        // 仅捕获 mBottomView
+        @Override
+        public boolean tryCaptureView(View child, int pointerId) {
+            return child == mBottomView;
+        }
+
+        // 控制边界, 防止 mBottomView 的头部超出边界
+        @Override
+        public int clampViewPositionVertical(View child, int top, int dy) {
+            if(child == mBottomView){
+                int newTop = top;
+                newTop = Math.max(newTop, ViewState.FILL.getTop());
+                return newTop;
+            }
+            return top;
+        }
+
+        // 手指释放的时候回调
+        @Override
+        public void onViewReleased(View releasedChild, float xvel, float yvel) {
+            if (releasedChild == mBottomView) {
+                int top = releasedChild.getTop();
+                if(top >= ViewState.FILL.getTop() && top <= ViewState.HOVER.getTop()){
+                    if(top < (ViewState.FILL.getTop() + ViewState.HOVER.getTop())/2)
+                        changeState(ViewState.FILL);
+                    else
+                        changeState(ViewState.HOVER);
+
+                }else if(top >= ViewState.HOVER.getTop() && top <= ViewState.ICE_BERG.getTop()){
+                    if(top < (ViewState.HOVER.getTop() + ViewState.ICE_BERG.getTop())/2)
+                        changeState(ViewState.HOVER);
+                    else
+                        changeState(ViewState.ICE_BERG);
+
+                }else if(top >= ViewState.ICE_BERG.getTop() && top <= ViewState.CLOSE.getTop()){
+                    if(top < (ViewState.ICE_BERG.getTop() + ViewState.CLOSE.getTop())/2)
+                        changeState(ViewState.ICE_BERG);
+                    else
+                        changeState(ViewState.CLOSE);
+                }
+            }
+        }
+
+        // 在边界拖动时回调
+        @Override
+        public void onEdgeDragStarted(int edgeFlags, int pointerId) {
+//            mDragger.captureChildView(mEdgeTrackerView, pointerId);
+        }
+    }
 }
