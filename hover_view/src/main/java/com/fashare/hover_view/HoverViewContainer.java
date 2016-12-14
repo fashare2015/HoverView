@@ -1,18 +1,25 @@
 package com.fashare.hover_view;
 
 import android.content.Context;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import android.support.v4.widget.DrawerLayout;
 
 /**
  * User: fashare(153614131@qq.com)
  * Date: 2016-12-12
  * Time: 21:16
+ *
+ * {@link HoverView} 的容器,
+ * 类似于{@link DrawerLayout}
  */
-public class HoverViewContainer extends FrameLayout implements IShowState{
+public class HoverViewContainer extends FrameLayout implements ViewStateManager {
     private final String TAG = this.getClass().getSimpleName();
     private Context mContext;
 
@@ -22,6 +29,47 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
 
     private HoverView mBottomView;
     static HoverView EMPTY_VIEW;
+
+    private class DragCallback extends ViewDragHelper.Callback{
+        // 仅捕获 mBottomView
+        @Override
+        public boolean tryCaptureView(View child, int pointerId) {
+            return child == mBottomView;
+        }
+
+        // 控制边界, 防止 mBottomView 的头部超出边界
+        @Override
+        public int clampViewPositionVertical(View child, int top, int dy) {
+            if(child == mBottomView){
+                int newTop = top;
+                newTop = Math.max(newTop, ViewState.FILL.getTop(mBottomView));
+                return newTop;
+            }
+            return top;
+        }
+
+        // 手指释放的时候回调
+        @Override
+        public void onViewReleased(View releasedChild, float xvel, float yvel) {
+            if (releasedChild == mBottomView) {
+                int curTop = releasedChild.getTop();
+
+                setClosestStateIfBetween(ViewState.FILL, ViewState.HOVER, curTop);
+                setClosestStateIfBetween(ViewState.HOVER, ViewState.CLOSE, curTop);
+            }
+        }
+
+        private void setClosestStateIfBetween(ViewState beginState, ViewState endState, int curTop){
+            int beginTop = getTopOfState(beginState),
+                    endTop = getTopOfState(endState);
+            if(curTop >= beginTop && curTop <= endTop)
+                changeState(curTop < (beginTop + endTop)/2? beginState: endState);
+        }
+    }
+
+    int getTopOfState(ViewState viewState){
+        return viewState.getTop(mBottomView);
+    }
 
     public HoverViewContainer(Context context) {
         super(context);
@@ -47,15 +95,32 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
         EMPTY_VIEW.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
     }
 
+    private int mMeasuredHeight = 0;
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        resetBottomViewHeight();
+
+        if(mMeasuredHeight == 0){
+            mMeasuredHeight = getMeasuredHeight();
+
+            initViewState(mMeasuredHeight);
+        }
     }
 
-    private void resetBottomViewHeight() {
-        mBottomView.getLayoutParams().height = this.getMeasuredHeight();
-        invalidate();
+    private void initViewState(int height) {
+
+        // 隐藏 mBottomView 到底部
+        // 手动设置 marginTop: onLayout() 走完后相当于 View.setTop();
+        mViewState = ViewState.CLOSE;
+        ViewGroup.LayoutParams lp = mBottomView.getLayoutParams();
+        if(lp instanceof MarginLayoutParams){
+//            mBottomView.setTop(height);
+            ((MarginLayoutParams)lp).setMargins(0, height, 0, 0);
+        }
+
+        // 重置 mBottomView 高度 = 父容器(this) 的高度
+        lp.height = height;
     }
 
     @Override
@@ -65,8 +130,6 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
         mBottomView = findHoverView();
         if(mBottomView == EMPTY_VIEW)
             this.addView(EMPTY_VIEW);
-
-        ViewState.initViewState(mBottomView, HoverViewContainer.this);
     }
 
     private HoverView findHoverView() {
@@ -91,7 +154,7 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
     // ------ 滑动部分 begin ------
     private void smoothScrollTo(int finalTop){
         mBottomDragger.smoothSlideViewTo(mBottomView, 0, finalTop);
-        invalidate();
+        ViewCompat.postInvalidateOnAnimation(this);
     }
 
     // smoothScrollTo() 中用到 mScroller,
@@ -99,17 +162,16 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
     @Override
     public void computeScroll() {
         if(mBottomDragger.continueSettling(true))
-            invalidate();
+            ViewCompat.postInvalidateOnAnimation(this);
     }
-
 
     private void scrollTo(int finalTop){
         mBottomView.setTop(finalTop);
-        invalidate();
+        ViewCompat.postInvalidateOnAnimation(this);
     }
     // ------ 滑动部分 end ------
 
-    // ------ 对外接口 IShowState: begin ------
+    // ------ 对外接口 ViewStateManager: begin ------
     private ViewState mViewState = ViewState.CLOSE;
 
     @Override
@@ -121,69 +183,14 @@ public class HoverViewContainer extends FrameLayout implements IShowState{
     public void changeState(ViewState viewState, boolean isSmoothScroll) {
         mViewState = viewState;
         if(isSmoothScroll)
-            smoothScrollTo(viewState.getTop());
+            smoothScrollTo(getTopOfState(viewState));
         else
-            scrollTo(viewState.getTop());
+            scrollTo(getTopOfState(viewState));
     }
 
     @Override
     public ViewState getState() {
         return mViewState;
     }
-    // ------ 对外接口 IShowState: end ------
-
-    public int getViewDragState() {
-        return mBottomDragger.getViewDragState();
-    }
-
-    private class DragCallback extends ViewDragHelper.Callback{
-        // 仅捕获 mBottomView
-        @Override
-        public boolean tryCaptureView(View child, int pointerId) {
-            return child == mBottomView;
-        }
-
-        // 控制边界, 防止 mBottomView 的头部超出边界
-        @Override
-        public int clampViewPositionVertical(View child, int top, int dy) {
-            if(child == mBottomView){
-                int newTop = top;
-                newTop = Math.max(newTop, ViewState.FILL.getTop());
-                return newTop;
-            }
-            return top;
-        }
-
-        // 手指释放的时候回调
-        @Override
-        public void onViewReleased(View releasedChild, float xvel, float yvel) {
-            if (releasedChild == mBottomView) {
-                int top = releasedChild.getTop();
-                if(top >= ViewState.FILL.getTop() && top <= ViewState.HOVER.getTop()){
-                    if(top < (ViewState.FILL.getTop() + ViewState.HOVER.getTop())/2)
-                        changeState(ViewState.FILL);
-                    else
-                        changeState(ViewState.HOVER);
-
-                }else if(top >= ViewState.HOVER.getTop() && top <= ViewState.ICE_BERG.getTop()){
-                    if(top < (ViewState.HOVER.getTop() + ViewState.ICE_BERG.getTop())/2)
-                        changeState(ViewState.HOVER);
-                    else
-                        changeState(ViewState.ICE_BERG);
-
-                }else if(top >= ViewState.ICE_BERG.getTop() && top <= ViewState.CLOSE.getTop()){
-                    if(top < (ViewState.ICE_BERG.getTop() + ViewState.CLOSE.getTop())/2)
-                        changeState(ViewState.ICE_BERG);
-                    else
-                        changeState(ViewState.CLOSE);
-                }
-            }
-        }
-
-        // 在边界拖动时回调
-        @Override
-        public void onEdgeDragStarted(int edgeFlags, int pointerId) {
-//            mDragger.captureChildView(mEdgeTrackerView, pointerId);
-        }
-    }
+    // ------ 对外接口 ViewStateManager: end ------
 }

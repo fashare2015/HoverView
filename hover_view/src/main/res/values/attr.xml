@@ -4,7 +4,6 @@
     <declare-styleable name="HoverView">
         <attr name="mTopFill" format="float" />
         <attr name="mTopHover" format="float" />
-        <attr name="mTopIceBerg" format="float" />
     </declare-styleable>
 
 </resources>
