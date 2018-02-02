@@ -55,8 +55,8 @@ dependencies {
 ```
 <br/>
 
-#使用方式
-##布局结构
+# 使用方式
+## 布局结构
 类似`support`包里的`DrawLayout`和`NavigationView`的关系。这里有两个`View`:
 
 - `HoverViewContainer`: 容器，对应`DrawLayout`
