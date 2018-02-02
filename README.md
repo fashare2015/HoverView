@@ -1,10 +1,10 @@
-#HoverView
+# HoverView
 一直觉得知乎的交互体验是很好的，这次山寨了一把。
 这是一个底部抽屉，类似知乎收藏夹。它可以悬停在中间，随着滑动自然过渡到全屏。
 它是仿照`support`包里的`DrawLayout`和`NavigationView`设计的。
 <br/>
 
-#效果图
+# 效果图
 知乎收藏夹：
 
 - 可以悬停在中间
@@ -23,7 +23,7 @@
 ![这里写图片描述](http://img.blog.csdn.net/20161214213925928?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvYTE1MzYxNDEzMQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 <br/>
 
-#CSDN链接
+# CSDN链接
 http://blog.csdn.net/a153614131/article/details/53647831
 <br/>
 
@@ -37,11 +37,20 @@ http://blog.csdn.net/a153614131/article/details/53647831
 
 <br/>
 
-#Gradle 依赖
-最新版本：1.0.1
-```java
+# Gradle 依赖
+最新版本：1.0.2
+```gradle
+// 1. Add it in your root build.gradle at the end of repositories:
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+// 2. Add the dependency in your app/build.gradle
 dependencies {
-    compile 'com.fashare2015:HoverView:最新版本'
+    compile 'com.github.fashare2015:HoverView:最新版本'
 }
 ```
 <br/>
@@ -81,14 +90,14 @@ dependencies {
 ```
 <br/>
 
-##HoverView 属性
+## HoverView 属性
 它有两个属性，描述 `HoverView.getTop()`占父容器的比例（Height 为父容器高度）：
 
 - app:mTopFill="0.0" 全屏时，距顶部 0.0Height（默认）
 - app:mTopHover="0.5" 悬停时，距顶部 0.5Height
 <br/>
 
-##状态（高度）切换
+## 状态（高度）切换
 ```java
 // 状态定义
 public enum ViewState {
@@ -104,11 +113,11 @@ mHoverView.changeState(ViewState.CLOSE);   // 切换至 "关闭" 状态
 ```
 <br/>
 
-#类图
+# 类图
 ![这里写图片描述](http://img.blog.csdn.net/20161214221551601?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvYTE1MzYxNDEzMQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 <br/>
 
-#最后
+# 最后
 使用愉快～
 
 
