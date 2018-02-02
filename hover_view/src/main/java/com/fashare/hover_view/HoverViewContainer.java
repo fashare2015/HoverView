@@ -2,14 +2,12 @@ package com.fashare.hover_view;
 
 import android.content.Context;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
-import android.support.v4.widget.DrawerLayout;
 
 /**
  * User: fashare(153614131@qq.com)
@@ -95,32 +93,10 @@ public class HoverViewContainer extends FrameLayout implements ViewStateManager 
         EMPTY_VIEW.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
     }
 
-    private int mMeasuredHeight = 0;
-
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        if(mMeasuredHeight == 0){
-            mMeasuredHeight = getMeasuredHeight();
-
-            initViewState(mMeasuredHeight);
-        }
-    }
-
-    private void initViewState(int height) {
-
-        // 隐藏 mBottomView 到底部
-        // 手动设置 marginTop: onLayout() 走完后相当于 View.setTop();
-        mViewState = ViewState.CLOSE;
-        ViewGroup.LayoutParams lp = mBottomView.getLayoutParams();
-        if(lp instanceof MarginLayoutParams){
-//            mBottomView.setTop(height);
-            ((MarginLayoutParams)lp).setMargins(0, height, 0, 0);
-        }
-
-        // 重置 mBottomView 高度 = 父容器(this) 的高度
-        lp.height = height;
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        changeState(ViewState.CLOSE, false);
     }
 
     @Override
@@ -166,7 +142,7 @@ public class HoverViewContainer extends FrameLayout implements ViewStateManager 
     }
 
     private void scrollTo(int finalTop){
-        mBottomView.setTop(finalTop);
+        ViewCompat.offsetTopAndBottom(mBottomView, finalTop - getTop());
         ViewCompat.postInvalidateOnAnimation(this);
     }
     // ------ 滑动部分 end ------
